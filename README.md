@@ -97,7 +97,7 @@ Test Loss: 0.0009, Accuracy: 99.94%
 
 #### So I have full confidence that this model has certain usability in optical inspection in industrial or simpler environmental settings.&#x1F624;
 
-#### <img src="https://pic.sopili.net/pub/emoji/twitter/2/72x72/26a0.png" width=20 height=20> For my convenience, the program will automatically clear</br> the /checkpoints and /log directories where model weights and loss records are stored in step 1-1.</br> Please refrain from storing any valuable items there </br>(e.g. exceptionally well-trained model weights). <3 
+#### <img src="https://pic.sopili.net/pub/emoji/twitter/2/72x72/26a0.png" width=20 height=20> For my convenience, the program will automatically clear</br> the /checkpoints and /log directories where model weights and loss records are stored in step 1-1.</br> Please refrain from storing any treasure there </br>(e.g. exceptionally well-trained model weights). <3 
 
 #### If you wish to modify this behavior, please go to the train function in AutoEncoder.py.
 

@@ -117,10 +117,8 @@ def test(test_dir='', model_path='checkpoints/Classifier/model_epoch_final.pt'):
 
 if __name__ == '__main__':
 
-    # data_dir = '/home/franky/Data/Project/feature_optimal/Our_Dataset/空車格資料集/訓練集'
-    # test_dir  = '/home/franky/Data/Project/feature_optimal/Our_Dataset/空車格資料集/測試集'
-    data_dir = '/home/franky/Data/Project/feature_optimal/datasets/dogs-vs-cats-redux-kernels-edition/train'
-    test_dir = '/home/franky/Data/Project/feature_optimal/datasets/dogs-vs-cats-redux-kernels-edition/test'
+    data_dir = 'your_train_dataset'
+    test_dir = 'your_test_dataset'
 
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", help="choose a mode to run this Python file.")

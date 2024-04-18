@@ -151,12 +151,9 @@ if __name__ == '__main__':
     parser.add_argument("mode", help="choose a mode to run this Python file.")
     args = parser.parse_args()
 
-    # data_dir = '/home/franky/Data/Project/feature_optimal/Our_Dataset/空車格資料集/訓練集'
-    # data_dir = '/home/franky/Data/Project/feature_optimal/Our_Dataset/空車格資料集/日本空車'
-    data_dir = '/home/franky/Data/Project/feature_optimal/datasets/dogs-vs-cats-redux-kernels-edition/train'
-    test_dir = '/home/franky/Data/Project/feature_optimal/datasets/dogs-vs-cats-redux-kernels-edition/test'
-    # test_dir = '/home/franky/Data/Project/feature_optimal/Our_Dataset/空車格資料集/日本混和'
-    # test_dir  = '/home/franky/Data/Project/feature_optimal/Our_Dataset/空車格資料集/燒瓶子/異物測試'
+    data_dir = 'your_train_dataset'
+    test_dir = 'your_test_dataset'
+    
     if(args.mode == 'train'):
         train(data_dir)
     elif(args.mode == 'test'):

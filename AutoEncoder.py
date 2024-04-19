@@ -2,16 +2,16 @@ import pdb
 from dataset import *
 from utils import save_csv, clearDir
 from torch.utils.data import DataLoader
-from torch.utils.data._utils.collate import default_collate
-from model import AutoEncoderConv
+from model import AutoEncoderConv, AutoEncoderConv_Lite
 from torch import nn
 from torch.optim import lr_scheduler
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
+from torch.cuda.amp import autocast, GradScaler
 import argparse
 
-def train(data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/'):
+def train(model, data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/'):
     clearDir(save_model_path)
     clearDir(log_path)
     train_loss_log = log_path + 'AutoEncoder_train_loss.csv'
@@ -20,7 +20,7 @@ def train(data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/')
     learning_rate = 0.001
 
     # Initialize the autoencoder
-    model = AutoEncoderConv()
+
     model.train()
 
     # Define transform
@@ -39,6 +39,7 @@ def train(data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/')
     
     # Move the model to GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.backends.cudnn.benchmark = True if device==torch.device('cuda') else False
     print("Now use device: " + str(device))
     model.to(device)
     
@@ -47,6 +48,7 @@ def train(data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/')
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = lr_scheduler.StepLR(optimizer, 20, gamma=0.1)
     min_loss = None
+    scaler = GradScaler()
 
     # Train the autoencoder
     for epoch in range(epochs):
@@ -55,11 +57,14 @@ def train(data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/')
             batch_data = batch_data.to(device)
             optimizer.zero_grad()
             # ===================forward=====================
-            output = model(batch_data)
-            loss = loss_func(output, batch_data)
+            # Runs the forward pass under autocast.
+            with autocast():
+                output = model(batch_data)
+                loss = loss_func(output, batch_data)
             # ===================backward====================
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
         scheduler.step()
         # ===================log========================
         loss_log = loss.cpu().detach().numpy()
@@ -75,9 +80,8 @@ def train(data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/')
             min_loss = loss
 
 
-def test(test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt'):
+def test(model, test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt'):
     batch_size = 1
-    model = AutoEncoderConv()
 
     # Move the model to GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -108,14 +112,15 @@ def test(test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt')
             print('Output Score: {}'.format(round(float(loss), 3)))
             
 
-def vis(test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt'):
+def vis(model, test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt'):
     batch_size = 128
+    loss_func = nn.MSELoss()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
-    loss_func = nn.MSELoss()
-    model = AutoEncoderConv().to(device)
+    model.to(device)
     model.load_state_dict(torch.load(model_path))
     model.eval()
+
     # Define transform
     transform = transforms.Compose([
         transforms.Resize((64, 64)),
@@ -123,15 +128,11 @@ def vis(test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt'):
     ])
     dataset = ImageFolder(root=test_dir, transform=transform)
     test_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-
-    # test_dataset = imgDataset(data_dir=val_dir)
-    # test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=default_collate)
     
     with torch.no_grad():
         for data, _ in test_dataloader:
             data = data.to(device)
             recon = model(data)
-            
             break
 
     _, ax = plt.subplots(2, 7, figsize=(15, 4))
@@ -151,15 +152,18 @@ if __name__ == '__main__':
     parser.add_argument("mode", help="choose a mode to run this Python file.")
     args = parser.parse_args()
 
-    data_dir = 'your_train_dataset'
-    test_dir = 'your_test_dataset'
-    
+    model = AutoEncoderConv()
+    # model = AutoEncoderConv_Lite()
+
+    data_dir = 'your_train_data'
+    test_dir = 'your_test_data'
+
     if(args.mode == 'train'):
-        train(data_dir)
+        train(model, data_dir)
     elif(args.mode == 'test'):
-        test(test_dir)
+        test(model, test_dir)
     elif(args.mode == 'vis'):
-        vis(test_dir)
+        vis(model, test_dir)
 
             
 

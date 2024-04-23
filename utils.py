@@ -1,5 +1,6 @@
 import pandas as pd
 import shutil
+import time
 import os
 
 
@@ -24,3 +25,12 @@ def clearDir(dir_path=''):
         print("pls fill in dir path.")
     shutil.rmtree(dir_path)
     os.mkdir(dir_path)
+
+def calculate_time(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print("Function '{}' took {:.4f} seconds to execute.".format( func.__name__, (end_time - start_time)))
+        return result
+    return wrapper

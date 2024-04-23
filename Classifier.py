@@ -1,7 +1,7 @@
 import pdb
 import PIL.Image as Image
 from dataset import *
-from utils import save_csv
+from utils import save_csv, clearDir, calculate_time
 from torch.utils.data import DataLoader
 from model import AutoEncoderConv, AutoEncoderConv_Lite, AutoEncoderClassifier, AutoEncoderClassifier_Lite
 from torch import nn
@@ -11,24 +11,28 @@ import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
 from torch.cuda.amp import autocast, GradScaler
 import argparse
-import time 
+import time
 
-
-def train(model, train_dir='', save_model_path='checkpoints/Classifier/', log_path='log/'):
+@calculate_time
+def train(model, train_dir='', save_model_path='checkpoints/Classifier/', log_path='log/Classifier/'):
+    clearDir(save_model_path)
+    clearDir(log_path)
     train_loss_log = log_path + 'Classifier_train_loss.csv'
     epochs = 50
     batch_size = 128
     learning_rate = 0.001
+    num_workers = torch.cuda.device_count()*4
     model.train()
 
     transform = transforms.Compose([
-        transforms.Resize((64, 64)),  
+        transforms.Resize((64, 64)),
+        transforms.RandomRotation([-30,30], interpolation=transforms.InterpolationMode.BILINEAR, expand=False),
         transforms.ToTensor(),           
     ])
 
     # Load dataset
     dataset = ImageFolder(root=train_dir, transform=transform)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
     # Move the model to GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -67,14 +71,16 @@ def train(model, train_dir='', save_model_path='checkpoints/Classifier/', log_pa
 
         if (min_loss!=None and min_loss > loss):
             torch.save(model.state_dict(), save_model_path + 'model_epoch_final.pt')
-        else:
+            min_loss = loss
+        elif(not min_loss):
             min_loss = loss
 
-
-def test(model, test_dir='', model_path='checkpoints/Classifier/model_epoch_final.pt'):
+@calculate_time
+def test(model, test_dir='', model_path='checkpoints/Classifier/model_epoch_final.pt', log_path='log/Classifier/'):
     init_time = time.time()
-    test_loss_log = 'log/Classifier_test_loss.csv'
+    test_loss_log = log_path + 'Classifier_test_loss.csv'
     batch_size = 1
+    num_workers = torch.cuda.device_count()*4
     transform = transforms.Compose([
         transforms.Resize((64, 64)),  
         transforms.ToTensor(),           
@@ -86,7 +92,7 @@ def test(model, test_dir='', model_path='checkpoints/Classifier/model_epoch_fina
 
     # Load dataset
     dataset = ImageFolder(root=test_dir, transform=transform)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     # Move the model to GPU if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -121,8 +127,8 @@ def test(model, test_dir='', model_path='checkpoints/Classifier/model_epoch_fina
 
 if __name__ == '__main__':
 
-    data_dir = 'your_train_data'
-    test_dir = 'your_test_data'
+    data_dir = 'your_train_dataset'
+    test_dir = 'your_test_dataset'
 
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", help="choose a mode to run this Python file.")

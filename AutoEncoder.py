@@ -1,6 +1,6 @@
 import pdb
 from dataset import *
-from utils import save_csv, clearDir
+from utils import save_csv, clearDir, calculate_time
 from torch.utils.data import DataLoader
 from model import AutoEncoderConv, AutoEncoderConv_Lite
 from torch import nn
@@ -11,13 +11,15 @@ from torchvision.datasets import ImageFolder
 from torch.cuda.amp import autocast, GradScaler
 import argparse
 
-def train(model, data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/'):
+@calculate_time
+def train(model, data_dir, save_model_path='checkpoints/AutoEncoder/', log_path='log/AutoEncoder/'):
     clearDir(save_model_path)
     clearDir(log_path)
     train_loss_log = log_path + 'AutoEncoder_train_loss.csv'
     epochs = 50
     batch_size = 128
     learning_rate = 0.001
+    num_workers = torch.cuda.device_count()*4
 
     # Initialize the autoencoder
 
@@ -27,7 +29,7 @@ def train(model, data_dir, save_model_path='checkpoints/AutoEncoder/', log_path=
     transform = transforms.Compose([
         transforms.Resize((64, 64)),
         # transforms.RandomHorizontalFlip(p=0.5),
-        # transforms.RandomRotation([-180,180], interpolation=transforms.InterpolationMode.BILINEAR, expand=False),
+        transforms.RandomRotation([-30,30], interpolation=transforms.InterpolationMode.BILINEAR, expand=False),
         transforms.ToTensor(),
     ])
 
@@ -35,7 +37,7 @@ def train(model, data_dir, save_model_path='checkpoints/AutoEncoder/', log_path=
     dataset = ImageFolder(root=data_dir, transform=transform)
 
     # Define the dataloader
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     
     # Move the model to GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -76,12 +78,14 @@ def train(model, data_dir, save_model_path='checkpoints/AutoEncoder/', log_path=
 
         if (min_loss!=None and min_loss > loss):
             torch.save(model.state_dict(), save_model_path + 'model_epoch_final.pt')
-        else:
+            min_loss = loss
+        elif(not min_loss):
             min_loss = loss
 
-
+@calculate_time
 def test(model, test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt'):
     batch_size = 1
+    num_workers = torch.cuda.device_count()*4
 
     # Move the model to GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -100,7 +104,7 @@ def test(model, test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_fin
     dataset = ImageFolder(root=test_dir, transform=transform)
 
     # Define the dataloader
-    test_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    test_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     loss_func = nn.MSELoss()
 
     with torch.no_grad():
@@ -111,9 +115,10 @@ def test(model, test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_fin
             loss = loss_func(output, batch_data)
             print('Output Score: {}'.format(round(float(loss), 3)))
             
-
+@calculate_time
 def vis(model, test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_final.pt'):
     batch_size = 128
+    num_workers = torch.cuda.device_count()*4
     loss_func = nn.MSELoss()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
@@ -127,7 +132,7 @@ def vis(model, test_dir='', model_path='checkpoints/AutoEncoder/model_epoch_fina
         transforms.ToTensor(),
     ])
     dataset = ImageFolder(root=test_dir, transform=transform)
-    test_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    test_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     
     with torch.no_grad():
         for data, _ in test_dataloader:
@@ -155,8 +160,8 @@ if __name__ == '__main__':
     model = AutoEncoderConv()
     # model = AutoEncoderConv_Lite()
 
-    data_dir = 'your_train_data'
-    test_dir = 'your_test_data'
+    data_dir = 'your_train_dataset'
+    test_dir = 'your_test_dataset'
 
     if(args.mode == 'train'):
         train(model, data_dir)

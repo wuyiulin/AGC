@@ -19,10 +19,10 @@ def vision(csv_path):
     y = loss_list
     plt.xlabel('epochs', fontsize="10")
     plt.ylabel('Loss', fontsize="10")
-    plt.title('AutoEncoder Loss', fontsize="18")
+    plt.title('Classifier Loss', fontsize="18")
     plt.plot(x, y, color='red', linestyle="-", linewidth="2", markersize="3", marker=".")
     plt.show()
 
 if __name__ == '__main__':
-    csv_path = 'log/AutoEncoder_train_loss.csv'
+    csv_path = 'log/Classifier/Classifier_train_loss.csv'
     vision(csv_path)

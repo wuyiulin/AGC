@@ -85,7 +85,7 @@ python Classifier.py test
 ```
 
 ```bash=
-Test Loss: 0.7505, Accuracy: 83.52%
+Test Loss: 0.7738, Accuracy: 84.58%
 ```
 
 #### You can check final accuracy of this task,</br>it seems not a perfect score in [Dogs vs. Cats](https://www.kaggle.com/competitions/dogs-vs-cats-redux-kernels-edition/overview) dataset.

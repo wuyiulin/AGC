@@ -9,17 +9,17 @@ class AutoEncoderConv(nn.Module):
 		self.encoder = nn.Sequential(
 			nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
 			nn.BatchNorm2d(16),
-			nn.ReLU(),
+			nn.ReLU(inplace=True),
 			nn.Conv2d(16, 64, kernel_size=3, stride=1, padding=1),
 			nn.BatchNorm2d(64),
-			nn.ReLU(),
+			nn.ReLU(inplace=True),
 			nn.Conv2d(64, 16, kernel_size=3, stride=1, padding=1),
 			nn.BatchNorm2d(16),
-			nn.ReLU(),
+			nn.ReLU(inplace=True),
 			nn.MaxPool2d(kernel_size=2, stride=2),
 			nn.Conv2d(16, 8, kernel_size=3, stride=1, padding=1),
 			nn.BatchNorm2d(8),
-			nn.ReLU(),
+			nn.ReLU(inplace=True),
 			nn.MaxPool2d(kernel_size=2, stride=2)
 		)
 		self.decoder = nn.Sequential(
@@ -28,19 +28,19 @@ class AutoEncoderConv(nn.Module):
 							stride=2, 
 							padding=1, 
 							output_padding=1),
-			nn.ReLU(),
+			nn.ReLU(inplace=True),
 			nn.ConvTranspose2d(16, 64, 
 							kernel_size=3, 
 							stride=2, 
 							padding=1, 
 							output_padding=1),
-			nn.ReLU(),
+			nn.ReLU(inplace=True),
 			nn.ConvTranspose2d(64, 16, 
 							kernel_size=3, 
 							stride=1, 
 							padding=1, 
 							output_padding=0),
-			nn.ReLU(),
+			nn.ReLU(inplace=True),
 			nn.ConvTranspose2d(16, 3, 
 							kernel_size=3, 
 							stride=1, 
@@ -107,13 +107,13 @@ class AutoEncoderClassifier(nn.Module):
 
 	def forward(self, x):
 		x = self.autoencoder.encoder(x)
-		x = F.relu(self.conv1(x))
+		x = F.relu(self.conv1(x), inplace=True)
 		x = self.BN1(x)
-		x = self.pool(F.relu(self.conv2(x)))
+		x = self.pool(F.relu(self.conv2(x), inplace=True))
 		x = self.BN2(x)
-		x = self.pool(F.relu(self.conv3(x)))
+		x = self.pool(F.relu(self.conv3(x), inplace=True))
 		x = self.BN3(x)
-		x = self.pool(F.relu(self.conv4(x)))
+		x = self.pool(F.relu(self.conv4(x), inplace=True))
 		x = self.BN4(x)
 		
 		x = x.view(-1, 256 * 2 * 2) # 因為 2D 圖片 原始輸入是 16*16，經過三層 MaxPool2d(2,2) 縮為 2*2

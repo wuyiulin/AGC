@@ -127,8 +127,8 @@ def test(model, test_dir='', model_path='checkpoints/Classifier/model_epoch_fina
 
 if __name__ == '__main__':
 
-    data_dir = 'your_train_dataset'
-    test_dir = 'your_test_dataset'
+    data_dir = 'your_train_dateset'
+    test_dir = 'your_test_dateset'
 
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", help="choose a mode to run this Python file.")

@@ -160,8 +160,8 @@ if __name__ == '__main__':
     model = AutoEncoderConv()
     # model = AutoEncoderConv_Lite()
 
-    data_dir = 'your_train_dataset'
-    test_dir = 'your_test_dataset'
+    data_dir = 'your_train_dateset'
+    test_dir = 'your_test_dateset'
 
     if(args.mode == 'train'):
         train(model, data_dir)
